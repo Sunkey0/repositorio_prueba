@@ -60,7 +60,7 @@ st.title("Análisis de Empresas Colombianas")
 st.write("Esta aplicación analiza empresas colombianas y genera una descripción y una puntuación de prospecto usando IA.")
 
 # Cargar el archivo CSV
-archivo = "empresas_colombia.csv"
+archivo = "empresas_colombia_2.csv"
 if os.path.exists(archivo):
     df = pd.read_csv(archivo, quotechar='"', delimiter=",", encoding="utf-8-sig")
     
