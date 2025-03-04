@@ -6,6 +6,11 @@ import re
 import markdown2
 import streamlit as st
 
+# Configuración de la aplicación Streamlit
+st.set_page_config(page_title="Análisis de Empresas", layout="wide")
+st.title("Análisis de Empresas Colombianas")
+st.write("Esta aplicación analiza empresas colombianas y genera una puntuación de prospecto usando IA.")
+
 # Habilitar el desplazamiento vertical
 st.markdown(
     """
@@ -109,11 +114,6 @@ def generar_informe(df):
         )
     
     return informe_md
-
-# Configuración de la aplicación Streamlit
-st.set_page_config(page_title="Análisis de Empresas", layout="wide")
-st.title("Análisis de Empresas Colombianas")
-st.write("Esta aplicación analiza empresas colombianas y genera una puntuación de prospecto usando IA.")
 
 # Cargar el archivo CSV
 archivo = "empresas_colombia_2.csv"
