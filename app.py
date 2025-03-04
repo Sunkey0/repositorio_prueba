@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 import google.generativeai as genai
 import os
+import ast  # Para convertir la respuesta de la IA en una estructura de Python
 
 # Obtener la clave API desde una variable de entorno
 GEMINI_API_KEY = "AIzaSyAd-6n4h2Y0jUtdD75CH3xt1eke2pu4qYk"
@@ -31,50 +32,19 @@ def call_ia_model(data, prompt, model_name="gemini-1.5-flash"):
 # Función para procesar la respuesta de la IA
 def procesar_respuesta_ia(respuesta):
     try:
-        # Dividir la respuesta en líneas
-        lineas = [linea.strip() for linea in respuesta.split('\n') if linea.strip()]
+        # Convertir la respuesta de la IA en una estructura de Python
+        respuesta_limpia = respuesta.strip().replace("```python", "").replace("```", "").strip()
+        datos = ast.literal_eval(respuesta_limpia)  # Convertir a lista o diccionario
         
-        # Convertir las líneas en una lista de IDs, nombres, puntuaciones y criterios
-        ids = []
-        nombres = []
-        puntuaciones = []
-        criterios = []
-        lineas_no_procesadas = []  # Para almacenar líneas que no se pudieron procesar
-        
-        for linea in lineas:
-            try:
-                # Ignorar encabezados o líneas vacías
-                if linea.startswith("ID,Nombre,Puntuación,Criterios de puntuación") or not linea:
-                    continue
-                
-                # Procesar la línea como CSV
-                partes = linea.split(",")
-                if len(partes) == 4:
-                    id_empresa = partes[0].strip()
-                    nombre = partes[1].strip()
-                    puntuacion = int(partes[2].strip())
-                    criterio = partes[3].strip()
-                    
-                    if 1 <= puntuacion <= 10:  # Validar que la puntuación esté en el rango correcto
-                        ids.append(id_empresa)
-                        nombres.append(nombre)
-                        puntuaciones.append(puntuacion)
-                        criterios.append(criterio)
-                    else:
-                        lineas_no_procesadas.append(linea)  # Guardar línea no válida
-                else:
-                    lineas_no_procesadas.append(linea)  # Guardar línea no válida
-            except ValueError:
-                lineas_no_procesadas.append(linea)  # Guardar línea no válida
-        
-        # Mostrar advertencias si hay líneas no procesadas
-        if lineas_no_procesadas:
-            st.warning(f"Algunas líneas no pudieron procesarse: {lineas_no_procesadas}")
-        
-        return ids, nombres, puntuaciones, criterios
+        # Verificar que la estructura sea válida
+        if isinstance(datos, list) and all(isinstance(item, dict) for item in datos):
+            return datos
+        else:
+            st.error("La respuesta de la IA no es una lista de diccionarios válida.")
+            return None
     except Exception as e:
         st.error(f"Error al procesar la respuesta de la IA: {e}")
-        return None, None, None, None
+        return None
 
 # Configuración de la aplicación Streamlit
 st.title("Análisis de Empresas Colombianas")
@@ -97,9 +67,13 @@ if os.path.exists(archivo):
               "- Actividad principal. \n"
               "- Productos que se pueden ofrecer. \n"
               "- Relevancia para el sector industrial. \n"
-              "Responde con el siguiente formato: \n"
-              "ID,Nombre,Puntuación,Criterios de puntuación \n"
-              "Asegúrate de generar una puntuación para cada empresa en el archivo CSV.")
+              "Responde con una lista de diccionarios en formato Python, donde cada diccionario tenga las siguientes claves: \n"
+              "- 'ID': El ID de la empresa. \n"
+              "- 'Nombre': El nombre de la empresa. \n"
+              "- 'Puntuación': La puntuación asignada (1-10). \n"
+              "- 'Criterios': Los criterios de puntuación. \n"
+              "Ejemplo de formato: \n"
+              "[{'ID': '123', 'Nombre': 'Empresa A', 'Puntuación': 8, 'Criterios': 'Buena relevancia en el sector industrial.'}, ...]")
     
     # Botón para ejecutar el análisis
     if st.button("Generar Puntuación"):
@@ -111,21 +85,16 @@ if os.path.exists(archivo):
         st.text(respuesta)
         
         # Procesar la respuesta de la IA
-        ids, nombres, puntuaciones, criterios = procesar_respuesta_ia(respuesta)
+        datos_ia = procesar_respuesta_ia(respuesta)
         
-        # Crear un nuevo DataFrame con los resultados de la IA
-        df_ia = pd.DataFrame({
-            "ID": ids if ids else [],
-            "Nombre": nombres if nombres else [],
-            "Puntuacion_Prospecto": puntuaciones if puntuaciones else [],
-            "Criterios_Puntuacion": criterios if criterios else []
-        })
-        
-        # Mostrar el DataFrame generado por la IA
-        st.subheader("Resultados de la IA")
-        st.write(df_ia)
-        
-        if ids and nombres and puntuaciones and criterios:
+        if datos_ia:
+            # Crear un DataFrame con los resultados de la IA
+            df_ia = pd.DataFrame(datos_ia)
+            
+            # Mostrar el DataFrame generado por la IA
+            st.subheader("Resultados de la IA")
+            st.write(df_ia)
+            
             # Fusionar los resultados con el DataFrame original
             df = df.merge(df_ia, on="ID", how="left")
             
