@@ -3,6 +3,7 @@ import streamlit as st
 import google.generativeai as genai
 import os
 import ast  # Para convertir la respuesta de la IA en una estructura de Python
+import re  # Para extraer la lista de diccionarios de la respuesta
 
 # Obtener la clave API desde una variable de entorno
 GEMINI_API_KEY = "AIzaSyAd-6n4h2Y0jUtdD75CH3xt1eke2pu4qYk"
@@ -29,12 +30,31 @@ def call_ia_model(data, prompt, model_name="gemini-1.5-flash"):
     except Exception as e:
         return f"Error: {str(e)}"
 
+# Función para extraer la lista de diccionarios de la respuesta de la IA
+def extraer_lista_desde_respuesta(respuesta):
+    try:
+        # Usar una expresión regular para encontrar la lista de diccionarios
+        match = re.search(r"\[.*\]", respuesta, re.DOTALL)
+        if match:
+            lista_str = match.group(0)  # Extraer la lista como cadena
+            return lista_str
+        else:
+            st.error("No se encontró una lista de diccionarios en la respuesta de la IA.")
+            return None
+    except Exception as e:
+        st.error(f"Error al extraer la lista de diccionarios: {e}")
+        return None
+
 # Función para procesar la respuesta de la IA
 def procesar_respuesta_ia(respuesta):
     try:
-        # Convertir la respuesta de la IA en una estructura de Python
-        respuesta_limpia = respuesta.strip().replace("```python", "").replace("```", "").strip()
-        datos = ast.literal_eval(respuesta_limpia)  # Convertir a lista o diccionario
+        # Extraer la lista de diccionarios de la respuesta
+        lista_str = extraer_lista_desde_respuesta(respuesta)
+        if not lista_str:
+            return None
+        
+        # Convertir la cadena en una lista de diccionarios
+        datos = ast.literal_eval(lista_str)
         
         # Verificar que la estructura sea válida
         if isinstance(datos, list) and all(isinstance(item, dict) for item in datos):
