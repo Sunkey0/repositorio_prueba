@@ -1,6 +1,5 @@
-import streamlit as st
 import pandas as pd
-import os
+import streamlit as st
 import google.generativeai as genai
 import clave  # Asegúrate de que este módulo contenga tu API key de Gemini
 
@@ -33,12 +32,15 @@ def procesar_respuesta_ia(respuesta, num_filas):
         # Filtrar solo las líneas que tienen el formato esperado (descripción, puntuación)
         lineas_filtradas = []
         for linea in lineas:
-            if ',' in linea:  # Verificar que haya al menos una coma
-                partes = linea.split(',')
-                if len(partes) == 2:  # Verificar que haya dos partes
-                    descripcion = partes[0].strip()
-                    puntuacion = partes[1].strip()
-                    lineas_filtradas.append([descripcion, puntuacion])
+            # Eliminar comillas dobles innecesarias
+            linea = linea.replace('"', '')
+            
+            # Dividir la línea en campos usando comas como delimitadores
+            partes = linea.split(',')
+            if len(partes) >= 2:  # Verificar que haya al menos dos partes
+                descripcion = partes[0].strip()
+                puntuacion = partes[1].strip()
+                lineas_filtradas.append([descripcion, puntuacion])
         
         # Verificar que el número de líneas coincida con el número de filas del DataFrame
         if len(lineas_filtradas) != num_filas:
