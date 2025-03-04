@@ -67,7 +67,7 @@ st.title("Análisis de Empresas Colombianas")
 st.write("Esta aplicación analiza empresas colombianas y genera una puntuación de prospecto usando IA.")
 
 # Cargar el archivo CSV
-archivo = "empresas_colombia_2.csv"
+archivo = "empresas_colombia.csv"
 if os.path.exists(archivo):
     df = pd.read_csv(archivo, quotechar='"', delimiter=",", encoding="utf-8-sig")
     
@@ -82,7 +82,7 @@ if os.path.exists(archivo):
               "- Actividad principal. \n"
               "- Ubicación (ciudad y departamento). \n"
               "- Relevancia para el sector industrial. \n"
-              "Solo responde con un número por empresa, sin texto adicional.")
+              "Solo responde con un número por empresa, sin texto adicional. Asegúrate de generar una puntuación para cada empresa en el archivo CSV.")
     
     # Botón para ejecutar el análisis
     if st.button("Generar Puntuación"):
