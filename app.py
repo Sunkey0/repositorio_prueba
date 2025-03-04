@@ -185,7 +185,7 @@ if os.path.exists(archivo):
                 st.metric("Total de Empresas", len(df))
             
             with col2:
-                st.metric("Empresas de Alto Potencial", len(df[df["Puntuación_y"] >= 8]))
+                st.metric("Empresas de Alto Potencial", len(df[df["Puntuación_y"] >= 7]))
             
             with col3:
                 st.metric("Puntuación Promedio", f"{df['Puntuación_y'].mean():.2f}")
