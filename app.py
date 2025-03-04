@@ -34,42 +34,40 @@ def procesar_respuesta_ia(respuesta, num_filas):
         # Dividir la respuesta en líneas
         lineas = [linea.strip() for linea in respuesta.split('\n') if linea.strip()]
         
-        # Verificar que el número de líneas coincida con el número de filas del DataFrame
-        if len(lineas) != num_filas:
-            st.error(f"Error: La respuesta de la IA tiene {len(lineas)} líneas, pero se esperaban {num_filas}.")
-            return None, None, None
-        
-        # Convertir las líneas en una lista de IDs, puntuaciones y criterios
+        # Convertir las líneas en una lista de IDs, nombres, puntuaciones y criterios
         ids = []
+        nombres = []
         puntuaciones = []
         criterios = []
         for linea in lineas:
             try:
-                # Separar el ID, la puntuación y los criterios
+                # Separar el ID, nombre, puntuación y criterios
                 partes = linea.split("|")
-                if len(partes) == 3:
+                if len(partes) == 4:
                     id_empresa = int(partes[0].strip())
-                    puntuacion = int(partes[1].strip())
-                    criterio = partes[2].strip()
+                    nombre = partes[1].strip()
+                    puntuacion = int(partes[2].strip())
+                    criterio = partes[3].strip()
                 else:
                     st.error(f"Error: La línea '{linea}' no tiene el formato correcto.")
-                    return None, None, None
+                    return None, None, None, None
                 
                 if 1 <= puntuacion <= 10:  # Validar que la puntuación esté en el rango correcto
                     ids.append(id_empresa)
+                    nombres.append(nombre)
                     puntuaciones.append(puntuacion)
                     criterios.append(criterio)
                 else:
                     st.error(f"Error: La puntuación '{puntuacion}' no está en el rango de 1 a 10.")
-                    return None, None, None
+                    return None, None, None, None
             except ValueError:
                 st.error(f"Error: La línea '{linea}' no tiene un formato válido.")
-                return None, None, None
+                return None, None, None, None
         
-        return ids, puntuaciones, criterios
+        return ids, nombres, puntuaciones, criterios
     except Exception as e:
         st.error(f"Error al procesar la respuesta de la IA: {e}")
-        return None, None, None
+        return None, None, None, None
 
 # Configuración de la aplicación Streamlit
 st.title("Análisis de Empresas Colombianas")
@@ -93,7 +91,7 @@ if os.path.exists(archivo):
               "- Productos que se pueden ofrecer. \n"
               "- Relevancia para el sector industrial. \n"
               "Responde con el siguiente formato: \n"
-              "<ID> | <puntuación> | <criterios de puntuación> \n"
+              "<ID> | <Nombre> | <puntuación> | <criterios de puntuación> \n"
               "Asegúrate de generar una puntuación para cada empresa en el archivo CSV.")
     
     # Botón para ejecutar el análisis
@@ -106,18 +104,23 @@ if os.path.exists(archivo):
         st.text(respuesta)
         
         # Procesar la respuesta de la IA
-        ids, puntuaciones, criterios = procesar_respuesta_ia(respuesta, len(df))
+        ids, nombres, puntuaciones, criterios = procesar_respuesta_ia(respuesta, len(df))
         
-        if ids is not None and puntuaciones is not None and criterios is not None:
-            # Crear un DataFrame con los resultados
-            resultados_df = pd.DataFrame({
-                "ID": ids,
-                "Puntuacion_Prospecto": puntuaciones,
-                "Criterios_Puntuacion": criterios
-            })
-            
+        # Crear un nuevo DataFrame con los resultados de la IA
+        df_ia = pd.DataFrame({
+            "ID": ids if ids else [],
+            "Nombre": nombres if nombres else [],
+            "Puntuacion_Prospecto": puntuaciones if puntuaciones else [],
+            "Criterios_Puntuacion": criterios if criterios else []
+        })
+        
+        # Mostrar el DataFrame generado por la IA
+        st.subheader("Resultados de la IA")
+        st.write(df_ia)
+        
+        if ids is not None and nombres is not None and puntuaciones is not None and criterios is not None:
             # Fusionar los resultados con el DataFrame original
-            df = df.merge(resultados_df, on="ID", how="left")
+            df = df.merge(df_ia, on="ID", how="left")
             
             # Mostrar el DataFrame actualizado
             st.subheader("Datos Actualizados")
