@@ -29,7 +29,7 @@ def call_ia_model(data, prompt, model_name="gemini-1.5-flash"):
         return f"Error: {str(e)}"
 
 # Función para procesar la respuesta de la IA
-def procesar_respuesta_ia(respuesta, num_filas):
+def procesar_respuesta_ia(respuesta):
     try:
         # Dividir la respuesta en líneas
         lineas = [linea.strip() for linea in respuesta.split('\n') if linea.strip()]
@@ -39,30 +39,36 @@ def procesar_respuesta_ia(respuesta, num_filas):
         nombres = []
         puntuaciones = []
         criterios = []
+        lineas_no_procesadas = []  # Para almacenar líneas que no se pudieron procesar
+        
         for linea in lineas:
             try:
+                # Eliminar caracteres no deseados (como ```csv)
+                linea = linea.replace("```csv", "").replace("```", "").strip()
+                
                 # Separar el ID, nombre, puntuación y criterios
                 partes = linea.split("|")
                 if len(partes) == 4:
-                    id_empresa = int(partes[0].strip())
+                    id_empresa = partes[0].strip()
                     nombre = partes[1].strip()
                     puntuacion = int(partes[2].strip())
                     criterio = partes[3].strip()
+                    
+                    if 1 <= puntuacion <= 10:  # Validar que la puntuación esté en el rango correcto
+                        ids.append(id_empresa)
+                        nombres.append(nombre)
+                        puntuaciones.append(puntuacion)
+                        criterios.append(criterio)
+                    else:
+                        lineas_no_procesadas.append(linea)  # Guardar línea no válida
                 else:
-                    st.error(f"Error: La línea '{linea}' no tiene el formato correcto.")
-                    return None, None, None, None
-                
-                if 1 <= puntuacion <= 10:  # Validar que la puntuación esté en el rango correcto
-                    ids.append(id_empresa)
-                    nombres.append(nombre)
-                    puntuaciones.append(puntuacion)
-                    criterios.append(criterio)
-                else:
-                    st.error(f"Error: La puntuación '{puntuacion}' no está en el rango de 1 a 10.")
-                    return None, None, None, None
+                    lineas_no_procesadas.append(linea)  # Guardar línea no válida
             except ValueError:
-                st.error(f"Error: La línea '{linea}' no tiene un formato válido.")
-                return None, None, None, None
+                lineas_no_procesadas.append(linea)  # Guardar línea no válida
+        
+        # Mostrar advertencias si hay líneas no procesadas
+        if lineas_no_procesadas:
+            st.warning(f"Algunas líneas no pudieron procesarse: {lineas_no_procesadas}")
         
         return ids, nombres, puntuaciones, criterios
     except Exception as e:
@@ -104,7 +110,7 @@ if os.path.exists(archivo):
         st.text(respuesta)
         
         # Procesar la respuesta de la IA
-        ids, nombres, puntuaciones, criterios = procesar_respuesta_ia(respuesta, len(df))
+        ids, nombres, puntuaciones, criterios = procesar_respuesta_ia(respuesta)
         
         # Crear un nuevo DataFrame con los resultados de la IA
         df_ia = pd.DataFrame({
@@ -118,7 +124,7 @@ if os.path.exists(archivo):
         st.subheader("Resultados de la IA")
         st.write(df_ia)
         
-        if ids is not None and nombres is not None and puntuaciones is not None and criterios is not None:
+        if ids and nombres and puntuaciones and criterios:
             # Fusionar los resultados con el DataFrame original
             df = df.merge(df_ia, on="ID", how="left")
             
