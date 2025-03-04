@@ -3,9 +3,17 @@ import streamlit as st
 import google.generativeai as genai
 import clave  # Asegúrate de que este módulo contenga tu API key de Gemini
 import os
+import streamlit as st
+import pandas as pd
+import google.generativeai as genai
+
+# Obtener la clave API desde una variable de entorno
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    st.error("No se encontró la variable de entorno GEMINI_API_KEY.")
+    st.stop()
 
 # Configuración de la API Gemini
-GEMINI_API_KEY = clave.key
 genai.configure(api_key=GEMINI_API_KEY)
 
 # Función para llamar a la IA
