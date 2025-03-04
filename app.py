@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 import google.generativeai as genai
 import clave  # Asegúrate de que este módulo contenga tu API key de Gemini
+import os
 
 # Configuración de la API Gemini
 GEMINI_API_KEY = clave.key
