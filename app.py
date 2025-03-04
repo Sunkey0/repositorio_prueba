@@ -1,11 +1,7 @@
 import pandas as pd
 import streamlit as st
 import google.generativeai as genai
-import clave  # Asegúrate de que este módulo contenga tu API key de Gemini
 import os
-import streamlit as st
-import pandas as pd
-import google.generativeai as genai
 
 # Obtener la clave API desde una variable de entorno
 GEMINI_API_KEY = "AIzaSyAd-6n4h2Y0jUtdD75CH3xt1eke2pu4qYk"
@@ -41,36 +37,39 @@ def procesar_respuesta_ia(respuesta, num_filas):
         # Verificar que el número de líneas coincida con el número de filas del DataFrame
         if len(lineas) != num_filas:
             st.error(f"Error: La respuesta de la IA tiene {len(lineas)} líneas, pero se esperaban {num_filas}.")
-            return None, None
+            return None, None, None
         
-        # Convertir las líneas en una lista de puntuaciones y criterios
+        # Convertir las líneas en una lista de IDs, puntuaciones y criterios
+        ids = []
         puntuaciones = []
         criterios = []
         for linea in lineas:
             try:
-                # Separar la puntuación y los criterios (si existen)
+                # Separar el ID, la puntuación y los criterios
                 partes = linea.split("|")
-                if len(partes) == 2:
-                    puntuacion = int(partes[0].strip())
-                    criterio = partes[1].strip()
+                if len(partes) == 3:
+                    id_empresa = int(partes[0].strip())
+                    puntuacion = int(partes[1].strip())
+                    criterio = partes[2].strip()
                 else:
-                    puntuacion = int(linea.strip())
-                    criterio = "Criterios no especificados."
+                    st.error(f"Error: La línea '{linea}' no tiene el formato correcto.")
+                    return None, None, None
                 
                 if 1 <= puntuacion <= 10:  # Validar que la puntuación esté en el rango correcto
+                    ids.append(id_empresa)
                     puntuaciones.append(puntuacion)
                     criterios.append(criterio)
                 else:
                     st.error(f"Error: La puntuación '{puntuacion}' no está en el rango de 1 a 10.")
-                    return None, None
+                    return None, None, None
             except ValueError:
-                st.error(f"Error: La línea '{linea}' no es un número válido.")
-                return None, None
+                st.error(f"Error: La línea '{linea}' no tiene un formato válido.")
+                return None, None, None
         
-        return puntuaciones, criterios
+        return ids, puntuaciones, criterios
     except Exception as e:
         st.error(f"Error al procesar la respuesta de la IA: {e}")
-        return None, None
+        return None, None, None
 
 # Configuración de la aplicación Streamlit
 st.title("Análisis de Empresas Colombianas")
@@ -94,7 +93,7 @@ if os.path.exists(archivo):
               "- Productos que se pueden ofrecer. \n"
               "- Relevancia para el sector industrial. \n"
               "Responde con el siguiente formato: \n"
-              "<puntuación> | <criterios de puntuación> \n"
+              "<ID> | <puntuación> | <criterios de puntuación> \n"
               "Asegúrate de generar una puntuación para cada empresa en el archivo CSV.")
     
     # Botón para ejecutar el análisis
@@ -107,12 +106,18 @@ if os.path.exists(archivo):
         st.text(respuesta)
         
         # Procesar la respuesta de la IA
-        puntuaciones, criterios = procesar_respuesta_ia(respuesta, len(df))
+        ids, puntuaciones, criterios = procesar_respuesta_ia(respuesta, len(df))
         
-        if puntuaciones is not None and criterios is not None:
-            # Agregar las puntuaciones y criterios al DataFrame
-            df["Puntuacion_Prospecto"] = puntuaciones
-            df["Criterios_Puntuacion"] = criterios
+        if ids is not None and puntuaciones is not None and criterios is not None:
+            # Crear un DataFrame con los resultados
+            resultados_df = pd.DataFrame({
+                "ID": ids,
+                "Puntuacion_Prospecto": puntuaciones,
+                "Criterios_Puntuacion": criterios
+            })
+            
+            # Fusionar los resultados con el DataFrame original
+            df = df.merge(resultados_df, on="ID", how="left")
             
             # Mostrar el DataFrame actualizado
             st.subheader("Datos Actualizados")
