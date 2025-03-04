@@ -6,6 +6,18 @@ import re
 import markdown2
 import streamlit as st
 
+# Habilitar el desplazamiento vertical
+st.markdown(
+    """
+    <style>
+    .stApp {
+        overflow-y: auto;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # Obtener la clave API desde una variable de entorno
 GEMINI_API_KEY = "AIzaSyAd-6n4h2Y0jUtdD75CH3xt1eke2pu4qYk"
 if not GEMINI_API_KEY:
