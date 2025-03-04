@@ -2,4 +2,4 @@ streamlit
 pandas
 google-generativeai
 markdown2
-
+plotly
