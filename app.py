@@ -43,11 +43,12 @@ def procesar_respuesta_ia(respuesta):
         
         for linea in lineas:
             try:
-                # Eliminar caracteres no deseados (como ```csv)
-                linea = linea.replace("```csv", "").replace("```", "").strip()
+                # Ignorar encabezados o líneas vacías
+                if linea.startswith("ID,Nombre,Puntuación,Criterios de puntuación") or not linea:
+                    continue
                 
-                # Separar el ID, nombre, puntuación y criterios
-                partes = linea.split("|")
+                # Procesar la línea como CSV
+                partes = linea.split(",")
                 if len(partes) == 4:
                     id_empresa = partes[0].strip()
                     nombre = partes[1].strip()
@@ -97,7 +98,7 @@ if os.path.exists(archivo):
               "- Productos que se pueden ofrecer. \n"
               "- Relevancia para el sector industrial. \n"
               "Responde con el siguiente formato: \n"
-              "<ID> | <Nombre> | <puntuación> | <criterios de puntuación> \n"
+              "ID,Nombre,Puntuación,Criterios de puntuación \n"
               "Asegúrate de generar una puntuación para cada empresa en el archivo CSV.")
     
     # Botón para ejecutar el análisis
