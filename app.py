@@ -88,8 +88,8 @@ def procesar_respuesta_ia(respuesta):
 def generar_informe(df):
     # Calcular métricas clave
     total_empresas = len(df)
-    alto_potencial = df[df["Puntuación_y"] >= 8]
-    medio_potencial = df[(df["Puntuación_y"] >= 5) & (df["Puntuación_y"] < 8)]
+    alto_potencial = df[df["Puntuación_y"] >= 7]
+    medio_potencial = df[(df["Puntuación_y"] >= 5) & (df["Puntuación_y"] < 7)]
     bajo_potencial = df[df["Puntuación_y"] < 5]
     
     porcentaje_alto_potencial = (len(alto_potencial) / total_empresas) * 100
