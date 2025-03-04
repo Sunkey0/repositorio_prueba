@@ -59,7 +59,7 @@ st.write("Esta aplicación analiza empresas colombianas y genera una descripció
 # Cargar el archivo CSV
 archivo = "empresas_colombia.csv"
 if os.path.exists(archivo):
-    df = pd.read_csv(archivo)
+    df = pd.read_csv(archivo, quotechar='"', delimiter=",", encoding="utf-8-sig")
     
     # Mostrar el DataFrame original
     st.subheader("Datos Originales")
