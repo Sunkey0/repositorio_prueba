@@ -77,10 +77,11 @@ if os.path.exists(archivo):
     
     # Prompt específico para el análisis
     prompt = ("Eres un analista de negocios especializado en el sector industrial. Tu tarea es evaluar el potencial de cada empresa como cliente para una compañía que vende repuestos industriales, bandas transportadoras, cintas, estribadores, carretillas, lubricantes, grasas grado alimenticio y otros productos relacionados con logística y transmisión de potencia. \n"
+              "anteriormente la empresa a vendido a empresas como colanta, productoras de café, productoras de productos alimenticios, canteras, productoras de pinturas, entre otros, la idea es llegar a empresasgrandes que puedan generar tickets considerables \n"
               "Para cada empresa, asigna una puntuación del 1 al 10, donde 1 es el peor prospecto y 10 el mejor. Considera los siguientes factores: \n"
               "- Categoría de la empresa. \n"
               "- Actividad principal. \n"
-              "- Ubicación (ciudad y departamento). \n"
+              "- Productos que se puede ofrecer. \n"
               "- Relevancia para el sector industrial. \n"
               "Solo responde con un número por empresa, sin texto adicional. Asegúrate de generar una puntuación para cada empresa en el archivo CSV.")
     
