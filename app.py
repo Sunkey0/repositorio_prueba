@@ -1,9 +1,10 @@
 import pandas as pd
-import streamlit as st
 import google.generativeai as genai
 import os
-import ast  # Para convertir la respuesta de la IA en una estructura de Python
-import re  # Para extraer la lista de diccionarios de la respuesta
+import ast
+import re
+import markdown2
+import streamlit as st
 
 # Obtener la clave API desde una variable de entorno
 GEMINI_API_KEY = "AIzaSyAd-6n4h2Y0jUtdD75CH3xt1eke2pu4qYk"
@@ -66,7 +67,39 @@ def procesar_respuesta_ia(respuesta):
         st.error(f"Error al procesar la respuesta de la IA: {e}")
         return None
 
+# Función para generar un informe ejecutivo en Markdown
+def generar_informe(df):
+    # Calcular métricas clave
+    total_empresas = len(df)
+    alto_potencial = df[df["Puntuación_y"] >= 8]
+    medio_potencial = df[(df["Puntuación_y"] >= 5) & (df["Puntuación_y"] < 8)]
+    bajo_potencial = df[df["Puntuación_y"] < 5]
+    
+    porcentaje_alto_potencial = (len(alto_potencial) / total_empresas) * 100
+    puntuacion_promedio = df["Puntuación_y"].mean()
+    
+    # Crear el resumen ejecutivo en Markdown
+    informe_md = (
+        "# Informe Ejecutivo de Análisis de Empresas\n\n"
+        "## Resumen General\n"
+        f"- **Total de empresas analizadas**: {total_empresas}\n"
+        f"- **Empresas de Alto Potencial (Puntuación >= 8)**: {len(alto_potencial)} ({porcentaje_alto_potencial:.2f}%)\n"
+        f"- **Empresas de Medio Potencial (Puntuación 5-7)**: {len(medio_potencial)}\n"
+        f"- **Empresas de Bajo Potencial (Puntuación < 5)**: {len(bajo_potencial)}\n"
+        f"- **Puntuación promedio**: {puntuacion_promedio:.2f}\n\n"
+        "## Análisis por Sectores\n"
+    )
+    
+    # Agregar análisis por sector
+    for sector, grupo in df.groupby("Categoría"):
+        informe_md += (
+            f"- **{sector}**: {len(grupo)} empresas, Puntuación promedio: {grupo['Puntuación_y'].mean():.2f}\n"
+        )
+    
+    return informe_md
+
 # Configuración de la aplicación Streamlit
+st.set_page_config(page_title="Análisis de Empresas", layout="wide")
 st.title("Análisis de Empresas Colombianas")
 st.write("Esta aplicación analiza empresas colombianas y genera una puntuación de prospecto usando IA.")
 
@@ -75,60 +108,80 @@ archivo = "empresas_colombia_2.csv"
 if os.path.exists(archivo):
     df = pd.read_csv(archivo, quotechar='"', delimiter=",", encoding="utf-8-sig")
     
-    # Mostrar el DataFrame original
-    st.subheader("Datos Originales")
-    st.write(df)
+    # Mostrar el DataFrame original en un menú expandible
+    with st.expander("Ver Datos Originales"):
+        st.dataframe(df)
     
     # Prompt específico para el análisis
-    prompt = ("Eres un analista de negocios especializado en el sector industrial. Tu tarea es evaluar el potencial de cada empresa como cliente para una compañía que vende repuestos industriales, bandas transportadoras, cintas, estribadores, carretillas, lubricantes, grasas grado alimenticio y otros productos relacionados con logística y transmisión de potencia. \n"
-              "Anteriormente, la empresa ha vendido a empresas como Colanta, productoras de café, productoras de productos alimenticios, canteras, productoras de pinturas, entre otros. La idea es llegar a empresas grandes que puedan generar tickets considerables. \n"
-              "Para cada empresa, asigna una puntuación del 1 al 10, donde 1 es el peor prospecto y 10 el mejor. Considera los siguientes factores: \n"
-              "- Categoría de la empresa. \n"
-              "- Actividad principal. \n"
-              "- Productos que se pueden ofrecer. \n"
-              "- Relevancia para el sector industrial. \n"
-              "Responde con una lista de diccionarios en formato Python, donde cada diccionario tenga las siguientes claves: \n"
-              "- 'ID': El ID de la empresa. \n"
-              "- 'Nombre': El nombre de la empresa. \n"
-              "- 'Puntuación': La puntuación asignada (1-10). \n"
-              "- 'Criterios': Los criterios de puntuación. \n"
-              "Ejemplo de formato: \n"
-              "[{'ID': '123', 'Nombre': 'Empresa A', 'Puntuación': 8, 'Criterios': 'Buena relevancia en el sector industrial.'}, ...]")
+    prompt = (
+        "Eres un analista de negocios especializado en el sector industrial. Tu tarea es evaluar el potencial de cada empresa como cliente para una compañía que vende repuestos industriales, bandas transportadoras, cintas, estribadores, carretillas, lubricantes, grasas grado alimenticio y otros productos relacionados con logística y transmisión de potencia. \n"
+        "Anteriormente, la empresa ha vendido a empresas como Colanta, productoras de café, productoras de productos alimenticios, canteras, productoras de pinturas, entre otros. La idea es llegar a empresas grandes que puedan generar tickets considerables. \n"
+        "Para cada empresa, asigna una puntuación del 1 al 10, donde 1 es el peor prospecto y 10 el mejor. Considera los siguientes factores: \n"
+        "- Categoría de la empresa. \n"
+        "- Actividad principal. \n"
+        "- Productos que se pueden ofrecer. \n"
+        "- Relevancia para el sector industrial. \n"
+        "Responde con una lista de diccionarios en formato Python, donde cada diccionario tenga las siguientes claves: \n"
+        "- 'ID': El ID de la empresa. \n"
+        "- 'Nombre': El nombre de la empresa. \n"
+        "- 'Puntuación': La puntuación asignada (1-10). \n"
+        "- 'Criterios': Los criterios de puntuación. \n"
+        "Ejemplo de formato: \n"
+        "[{'ID': '123', 'Nombre': 'Empresa A', 'Puntuación': 8, 'Criterios': 'Buena relevancia en el sector industrial.'}, ...]"
+    )
     
-# Botón para ejecutar el análisis
-if st.button("Generar Puntuación"):
-    # Llamar a la IA para obtener las puntuaciones
-    respuesta = call_ia_model(df, prompt)
-    
-    # Mostrar la respuesta de la IA
-    st.subheader("Respuesta de la IA")
-    st.text(respuesta)
-    
-    # Procesar la respuesta de la IA
-    datos_ia = procesar_respuesta_ia(respuesta)
-    
-    if datos_ia:
-        # Crear un DataFrame con los resultados de la IA
-        df_ia = pd.DataFrame(datos_ia)
+    # Botón para ejecutar el análisis
+    if st.button("Generar Puntuación"):
+        # Llamar a la IA para obtener las puntuaciones
+        respuesta = call_ia_model(df, prompt)
         
-        # Mostrar el DataFrame generado por la IA
-        st.subheader("Resultados de la IA")
-        st.write(df_ia)
+        # Mostrar la respuesta de la IA
+        with st.expander("Ver Respuesta de la IA"):
+            st.text(respuesta)
         
-        # Seleccionar solo las columnas necesarias de df_ia
-        df_ia = df_ia[["ID", "Puntuación", "Criterios"]]
+        # Procesar la respuesta de la IA
+        datos_ia = procesar_respuesta_ia(respuesta)
         
-        # Fusionar los resultados con el DataFrame original
-        df = df.merge(df_ia, on="ID", how="left")
-        
-        # Mostrar el DataFrame actualizado
-        st.subheader("Datos Actualizados")
-        st.write(df)
-        
-        # Guardar el nuevo CSV con las columnas agregadas
-        df.to_csv("empresas_colombia_con_puntuacion.csv", index=False, encoding="utf-8-sig")
-        st.success("Archivo generado exitosamente con las puntuaciones y criterios agregados.")
-    else:
-        st.error("No se pudieron agregar las puntuaciones debido a un error en la respuesta de la IA.")
+        if datos_ia:
+            # Crear un DataFrame con los resultados de la IA
+            df_ia = pd.DataFrame(datos_ia)
+            
+            # Mostrar el DataFrame generado por la IA en un menú expandible
+            with st.expander("Ver Resultados de la IA"):
+                st.dataframe(df_ia)
+            
+            # Seleccionar solo las columnas necesarias de df_ia
+            df_ia = df_ia[["ID", "Puntuación", "Criterios"]]
+            
+            # Fusionar los resultados con el DataFrame original
+            df = df.merge(df_ia, on="ID", how="left")
+            
+            # Mostrar el DataFrame actualizado en un menú expandible
+            with st.expander("Ver Datos Actualizados"):
+                st.dataframe(df)
+            
+            # Generar el informe ejecutivo en Markdown
+            informe_md = generar_informe(df)
+            
+            # Mostrar el informe en forma de KPIs
+            st.markdown("## KPIs del Informe")
+            
+            # Crear columnas para los KPIs
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.metric("Total de Empresas", len(df))
+            
+            with col2:
+                st.metric("Empresas de Alto Potencial", len(df[df["Puntuación_y"] >= 8]))
+            
+            with col3:
+                st.metric("Puntuación Promedio", f"{df['Puntuación_y'].mean():.2f}")
+            
+            # Mostrar el informe completo
+            st.markdown("## Informe Completo")
+            st.markdown(informe_md)
+        else:
+            st.error("No se pudieron agregar las puntuaciones debido a un error en la respuesta de la IA.")
 else:
     st.error("El archivo no existe.")
