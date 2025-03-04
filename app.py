@@ -193,16 +193,12 @@ if os.path.exists(archivo):
             with col3:
                 st.metric("Puntuación Promedio", f"{df['Puntuación_y'].mean():.2f}")
             
-            # Mostrar el informe completo
-            st.markdown("## Informe Completo")
-            st.markdown(informe_md)
-            
             # Crear pestañas para organizar el contenido
             tab1, tab2 = st.tabs(["Informe", "Gráficas"])
             
             with tab1:
                 # Contenido de la pestaña "Informe"
-                st.markdown("## Informe Detallado")
+                st.markdown("## Informe ")
                 st.markdown(informe_md)
             
             with tab2:
