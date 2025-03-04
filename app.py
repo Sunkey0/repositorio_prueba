@@ -5,11 +5,10 @@ import ast
 import re
 import markdown2
 import streamlit as st
+import plotly.express as px  # Para gráficos interactivos
 
-# Configuración de la aplicación Streamlit
+# Configuración de la página (DEBE SER LA PRIMERA LÍNEA DE STREAMLIT)
 st.set_page_config(page_title="Análisis de Empresas", layout="wide")
-st.title("Análisis de Empresas Colombianas")
-st.write("Esta aplicación analiza empresas colombianas y genera una puntuación de prospecto usando IA.")
 
 # Habilitar el desplazamiento vertical
 st.markdown(
@@ -115,6 +114,10 @@ def generar_informe(df):
     
     return informe_md
 
+# Título de la aplicación
+st.title("Análisis de Empresas Colombianas")
+st.write("Esta aplicación analiza empresas colombianas y genera una puntuación de prospecto usando IA.")
+
 # Cargar el archivo CSV
 archivo = "empresas_colombia_2.csv"
 if os.path.exists(archivo):
@@ -193,6 +196,42 @@ if os.path.exists(archivo):
             # Mostrar el informe completo
             st.markdown("## Informe Completo")
             st.markdown(informe_md)
+            
+            # Crear pestañas para organizar el contenido
+            tab1, tab2 = st.tabs(["Informe", "Gráficas"])
+            
+            with tab1:
+                # Contenido de la pestaña "Informe"
+                st.markdown("## Informe Detallado")
+                st.markdown(informe_md)
+            
+            with tab2:
+                # Contenido de la pestaña "Gráficas"
+                st.markdown("## Gráficas de Análisis")
+                
+                # Gráfica 1: Empresas segmentadas por potencial
+                st.markdown("### Empresas Segmentadas por Potencial")
+                segmentos = {
+                    "Alto Potencial": len(df[df["Puntuación_y"] >= 7]),
+                    "Medio Potencial": len(df[(df["Puntuación_y"] >= 5) & (df["Puntuación_y"] < 7)]),
+                    "Bajo Potencial": len(df[df["Puntuación_y"] < 5]),
+                }
+                df_segmentos = pd.DataFrame(list(segmentos.items()), columns=["Segmento", "Cantidad"])
+                fig1 = px.bar(df_segmentos, x="Segmento", y="Cantidad", color="Segmento", text="Cantidad")
+                st.plotly_chart(fig1, use_container_width=True)
+                
+                # Gráfica 2: Productos ofertados a empresas de medio y alto potencial
+                st.markdown("### Productos Ofertados a Empresas de Medio y Alto Potencial")
+                productos = {
+                    "Bandas Transportadoras": 120,
+                    "Carretillas": 80,
+                    "Lubricantes": 60,
+                    "Cintas": 40,
+                    "Estribadores": 30,
+                }
+                df_productos = pd.DataFrame(list(productos.items()), columns=["Producto", "Cantidad"])
+                fig2 = px.pie(df_productos, values="Cantidad", names="Producto", title="Distribución de Productos")
+                st.plotly_chart(fig2, use_container_width=True)
         else:
             st.error("No se pudieron agregar las puntuaciones debido a un error en la respuesta de la IA.")
 else:
