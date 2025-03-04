@@ -8,7 +8,7 @@ import pandas as pd
 import google.generativeai as genai
 
 # Obtener la clave API desde una variable de entorno
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_API_KEY = "AIzaSyAd-6n4h2Y0jUtdD75CH3xt1eke2pu4qYk"
 if not GEMINI_API_KEY:
     st.error("No se encontró la variable de entorno GEMINI_API_KEY.")
     st.stop()
