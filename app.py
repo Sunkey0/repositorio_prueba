@@ -142,6 +142,18 @@ def analizar_en_lotes(df_original, prompt, chunk_size=10, max_retries=3, delay=5
     return df_resultados
 
 
+def borrar_cache():
+    """
+    Elimina el archivo temporal de resultados para reiniciar el análisis.
+    """
+    archivo_temporal = "resultados_temporales.json"
+    if os.path.exists(archivo_temporal):
+        os.remove(archivo_temporal)
+        st.success("Caché borrado correctamente. Puedes comenzar un nuevo análisis.")
+    else:
+        st.warning("No hay caché para borrar.")
+
+
 # -----------------------------------------------------------------------------
 # FUNCIÓN PARA GENERAR INFORME EJECUTIVO
 # -----------------------------------------------------------------------------
@@ -185,6 +197,10 @@ def generar_informe(df):
 
 st.title("Análisis de Empresas Colombianas")
 st.write("Esta aplicación analiza empresas colombianas y genera una puntuación de prospecto usando IA.")
+
+# Botón para borrar el caché
+if st.button("Borrar Caché y Reiniciar Análisis"):
+    borrar_cache()
 
 # Cargar el archivo CSV
 archivo = "empresas_colombia_2.csv"
