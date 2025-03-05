@@ -216,42 +216,42 @@ if os.path.exists(archivo):
                 fig1 = px.bar(df_segmentos, x="Segmento", y="Cantidad", color="Segmento", text="Cantidad")
                 st.plotly_chart(fig1, use_container_width=True)
                 
-            # Gráfica 2: Productos ofertados a empresas de medio y alto potencial
-            st.markdown("### Productos Ofertados a Empresas de Medio y Alto Potencial")
-
-            # Definimos la lista de productos que buscamos en la columna 'Criterios'
-            lista_productos = [
-                "Bandas transportadoras",
-                "Carretillas",
-                "Lubricantes",
-                "Cintas",
-                "Estribadores"
-            ]
-
-            # Filtramos las empresas de medio y alto potencial (Puntuación >= 5)
-            df_filtrado = df[df["Puntuación_y"] >= 5]
-
-            # Contamos las menciones de cada producto dentro de 'Criterios'
-            conteo_productos = {producto: 0 for producto in lista_productos}
-
-            for _, fila in df_filtrado.iterrows():
-                criterios_lower = str(fila["Criterios"]).lower()  # Convertimos a minúsculas para búsqueda
-                for producto in lista_productos:
-                    # Si el producto aparece en el texto de 'Criterios', incrementamos el contador
-                    if producto.lower() in criterios_lower:
-                        conteo_productos[producto] += 1
-
-            # Convertimos el conteo en un DataFrame
-            df_productos = pd.DataFrame(list(conteo_productos.items()), columns=["Producto", "Cantidad"])
-
-            # Generamos la gráfica (pie chart) con Plotly
-            fig2 = px.pie(
-                df_productos,
-                values="Cantidad",
-                names="Producto",
-                title="Distribución de Productos Mencionados"
-            )
-            st.plotly_chart(fig2, use_container_width=True)
+                # Gráfica 2: Productos ofertados a empresas de medio y alto potencial
+                st.markdown("### Productos Ofertados a Empresas de Medio y Alto Potencial")
+    
+                # Definimos la lista de productos que buscamos en la columna 'Criterios'
+                lista_productos = [
+                    "Bandas transportadoras",
+                    "Carretillas",
+                    "Lubricantes",
+                    "Cintas",
+                    "Estribadores"
+                ]
+    
+                # Filtramos las empresas de medio y alto potencial (Puntuación >= 5)
+                df_filtrado = df[df["Puntuación_y"] >= 5]
+    
+                # Contamos las menciones de cada producto dentro de 'Criterios'
+                conteo_productos = {producto: 0 for producto in lista_productos}
+    
+                for _, fila in df_filtrado.iterrows():
+                    criterios_lower = str(fila["Criterios"]).lower()  # Convertimos a minúsculas para búsqueda
+                    for producto in lista_productos:
+                        # Si el producto aparece en el texto de 'Criterios', incrementamos el contador
+                        if producto.lower() in criterios_lower:
+                            conteo_productos[producto] += 1
+    
+                # Convertimos el conteo en un DataFrame
+                df_productos = pd.DataFrame(list(conteo_productos.items()), columns=["Producto", "Cantidad"])
+    
+                # Generamos la gráfica (pie chart) con Plotly
+                fig2 = px.pie(
+                    df_productos,
+                    values="Cantidad",
+                    names="Producto",
+                    title="Distribución de Productos Mencionados"
+                )
+                st.plotly_chart(fig2, use_container_width=True)
         else:
             st.error("No se pudieron agregar las puntuaciones debido a un error en la respuesta de la IA.")
 else:
