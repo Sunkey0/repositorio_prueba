@@ -318,6 +318,21 @@ if os.path.exists(archivo):
                 fig2 = px.pie(df_productos, values="Cantidad", names="Producto",
                               title="Distribución de Productos Mencionados")
                 st.plotly_chart(fig2, use_container_width=True)
+
+                st.markdown("### Categoría de Empresa con Prospectos de Medio y Alto Potencial")
+                
+                # Gráfica 3: Categoría de empresa con el número de prospectos en medio y alto potencial
+                # Filtrar empresas de medio y alto potencial
+                df_filtrado_categorias = df[df["Puntuación_y"] >= 5]
+                
+                # Contar el número de empresas por categoría
+                conteo_categorias = df_filtrado_categorias["Categoría"].value_counts().reset_index()
+                conteo_categorias.columns = ["Categoría", "Cantidad"]
+                
+                # Crear la gráfica
+                fig3 = px.bar(conteo_categorias, x="Categoría", y="Cantidad", color="Categoría", text="Cantidad",
+                              title="Número de Prospectos de Medio y Alto Potencial por Categoría de Empresa")
+                st.plotly_chart(fig3, use_container_width=True)
         else:
             st.error("No se pudieron generar puntuaciones para los registros.")
 else:
