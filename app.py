@@ -5,7 +5,9 @@ import ast
 import re
 import markdown2
 import streamlit as st
-import plotly.express as px  # Para gráficos interactivos
+import plotly.express as px
+import time
+import json
 
 # Configuración de la página (DEBE SER LA PRIMERA LÍNEA DE STREAMLIT)
 st.set_page_config(page_title="Análisis de Empresas", layout="wide")
@@ -88,38 +90,60 @@ def procesar_respuesta_ia(respuesta):
         return None
 
 
-def analizar_en_lotes(df_original, prompt, chunk_size=50):
+def analizar_en_lotes(df_original, prompt, chunk_size=10, max_retries=3, delay=5):
     """
     Procesa el DataFrame 'df_original' en lotes de tamaño 'chunk_size'.
+    Implementa reintentos y guarda el progreso en un archivo temporal.
     Devuelve un DataFrame con las columnas ['ID', 'Puntuación', 'Criterios'].
     """
     resultados_globales = []
+    archivo_temporal = "resultados_temporales.json"
 
+    # Cargar resultados temporales si existen
+    if os.path.exists(archivo_temporal):
+        with open(archivo_temporal, "r", encoding="utf-8") as f:
+            resultados_globales = json.load(f)
+
+    # Procesar en lotes
     for i in range(0, len(df_original), chunk_size):
         df_chunk = df_original.iloc[i : i + chunk_size].copy()
 
-        # Llamada a la IA para el chunk
-        respuesta = call_ia_model(df_chunk, prompt)
-
-        # Procesamos la respuesta
-        datos_ia = procesar_respuesta_ia(respuesta)
-        if datos_ia:
-            resultados_globales.extend(datos_ia)
-        else:
-            # Si falla, puedes implementar algún reintento o logging
-            st.warning(f"No se pudieron procesar los registros de {i} a {i+chunk_size}.")
+        # Verificar si el lote ya fue procesado
+        if any(resultado["ID"] in [r["ID"] for r in resultados_globales] for resultado in df_chunk.to_dict("records")):
+            st.info(f"Lote {i} a {i + chunk_size} ya procesado. Saltando...")
             continue
 
-    # Convertimos todos los resultados en un DataFrame
+        # Intentar procesar el lote
+        for intento in range(max_retries):
+            try:
+                respuesta = call_ia_model(df_chunk, prompt)
+                datos_ia = procesar_respuesta_ia(respuesta)
+
+                if datos_ia:
+                    resultados_globales.extend(datos_ia)
+                    st.success(f"Lote {i} a {i + chunk_size} procesado correctamente.")
+                    break
+                else:
+                    st.warning(f"Intento {intento + 1} fallido para el lote {i} a {i + chunk_size}.")
+            except Exception as e:
+                st.error(f"Error en el intento {intento + 1}: {str(e)}")
+
+            # Esperar antes de reintentar
+            time.sleep(delay)
+
+        # Guardar resultados temporales después de cada lote
+        with open(archivo_temporal, "w", encoding="utf-8") as f:
+            json.dump(resultados_globales, f, ensure_ascii=False, indent=4)
+
+    # Convertir todos los resultados en un DataFrame
     df_resultados = pd.DataFrame(resultados_globales)
-    # Filtra las columnas que quieras usar
     if not df_resultados.empty:
         df_resultados = df_resultados[["ID", "Puntuación", "Criterios"]]
     return df_resultados
 
 
 # -----------------------------------------------------------------------------
-# FUNCIÓN PARA GENERAR INFORME EJECUTIVO (LA DE TU CÓDIGO ORIGINAL)
+# FUNCIÓN PARA GENERAR INFORME EJECUTIVO
 # -----------------------------------------------------------------------------
 
 def generar_informe(df):
@@ -153,6 +177,7 @@ def generar_informe(df):
             )
 
     return informe_md
+
 
 # -----------------------------------------------------------------------------
 # APLICACIÓN STREAMLIT
@@ -197,7 +222,7 @@ if os.path.exists(archivo):
     if st.button("Generar Puntuación"):
         # Llamar a la IA en lotes
         st.info("Procesando registros en lotes, por favor espera...")
-        df_lotes = analizar_en_lotes(df, prompt, chunk_size=50)  # Ajusta chunk_size según tus necesidades
+        df_lotes = analizar_en_lotes(df, prompt, chunk_size=10)  # Ajusta chunk_size según tus necesidades
 
         if not df_lotes.empty:
             # Fusionar los resultados con el DataFrame original
