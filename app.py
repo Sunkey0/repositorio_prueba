@@ -198,9 +198,11 @@ if os.path.exists(archivo):
     # Prompt específico para el análisis
     prompt = (
         "Eres un analista de negocios especializado en el sector industrial. Tu tarea es evaluar el potencial "
-        "de cada empresa como cliente para una compañía que vende repuestos industriales, bandas transportadoras, "
-        "cintas, estribadores, carretillas, lubricantes, grasas grado alimenticio y otros productos relacionados "
-        "con logística y transmisión de potencia. \n"
+        "de cada empresa como cliente para una compañía que vende repuestos industriales, incluyendo:\n"
+        "- Bandas transportadoras, cintas, estribadores, carretillas, lubricantes, grasas grado alimenticio.\n"
+        "- Rodamientos, chumaceras, correas y poleas, piñones y cadenas, mangueras, acoples de transmisión.\n"
+        "- Acoples hidráulicos, rodachinas inox, mantenimiento preventivo y correctivo de equipos hidráulicos.\n"
+        "- Empalme de bandas transportadoras, bandas modulares, cangilones.\n"
         "Anteriormente, la empresa ha vendido a empresas como Colanta, productoras de café, productoras de productos "
         "alimenticios, canteras, productoras de pinturas, entre otros. La idea es llegar a empresas grandes que puedan "
         "generar tickets considerables.\n"
@@ -272,7 +274,19 @@ if os.path.exists(archivo):
                     "Carretillas",
                     "Lubricantes",
                     "Cintas",
-                    "Estribadores"
+                    "Estribadores",
+                    "Rodamientos",
+                    "Chumaceras",
+                    "Correas y poleas",
+                    "Piñones y cadenas",
+                    "Mangueras",
+                    "Acoples de transmisión",
+                    "Acoples hidráulicos",
+                    "Rodachinas Inox",
+                    "Mantenimiento preventivo y correctivo de equipos hidráulicos",
+                    "Empalme de bandas transportadoras",
+                    "Bandas modulares",
+                    "Cangilones"
                 ]
 
                 df_filtrado = df[df["Puntuación_y"] >= 5]
